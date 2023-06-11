@@ -1,0 +1,68 @@
+{
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devPath": "http://localhost:7855",
+    "distDir": "../dist",
+    "withGlobalTauri": true
+  },
+  "package": {
+    "productName": "dischart",
+    "version": "0.0.1"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true
+      },
+      "fs": {
+        "scope": ["$RESOURCE/resources/*", "$RESOURCE/resources/temp/*"],
+        "readFile": true,
+        "writeFile": true,
+        "removeFile": true
+      },
+      "window": {
+        "close": true,
+        "setTitle": true
+      },
+      "dialog": {
+        "all": true
+      },
+      "protocol": {
+        "all": false,
+        "asset": true,
+        "assetScope": ["**"]
+      },
+      "path": {
+        "all": true
+      }
+    },
+    "bundle": {
+      "active": true,
+      "targets": "all",
+      "identifier": "com.windlx.dischart",
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "resources": ["./resources"]
+    },
+    "security": {
+      "csp": null
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "DisChart",
+        "width": 800,
+        "height": 600
+      }
+    ]
+  }
+}

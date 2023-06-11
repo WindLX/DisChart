@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ch">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DisChart</title>
+    <script type="module" src="/src/main.ts" defer></script>
+  </head>
+  <body>
+    <div id="toast-container">
+    </div>
+    <div class="menubar-container" id="menubar">
+      <ul class="menu">
+        <li class="menu-item">文件
+          <ul class="submenu">
+            <li class="submenu-item">导入文件</li>
+            <li class="submenu-item">清空数据</li>
+            <li class="submenu-item">保存文件</li>
+            <li class="submenu-span"></li>
+            <li class="submenu-item">退出</li>
+          </ul>
+        </li>
+        <li class="menu-item">设置
+          <ul class="submenu">
+            <li class="submenu-item">更新配置</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+    <div class="main-container" id="main">
+      <div class="sidebar">
+        <ul class="sidebar-content">
+          <li class="main-point">
+            <input type="text" id="main" name="main" placeholder="主点ID" class="main-input">
+          </li>
+          <li class="sub-point">
+            <input type="text" id="main" name="main" placeholder="副点ID" class="sub-input">
+          </li>
+          <button class="send-btn">过滤</button>
+          <div class="tips">
+            <li class="text">副点ID格式示例：</li>
+            <li class="text">1-10, 5-8, 9</li>
+          </div>
+        </ul>
+      </div>
+      <button class="toggle-btn">H</button>
+      <div class="main">
+        <h2 id="title"></h2>
+        <div class="warn-box">
+          <div class="warn" id="warn">
+            <div class="light">
+              <span></span>
+              <p>0</p>
+            </div>
+            <div class="light">
+              <span></span>
+              <p>0</p>
+            </div>
+            <div class="light">
+              <span></span>
+              <p>0</p>
+            </div>
+          </div>
+          <div class="chart" id="chart"></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

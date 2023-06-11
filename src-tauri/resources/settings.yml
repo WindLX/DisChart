@@ -1,0 +1,23 @@
+window:
+  title: 距离报警系统
+system:
+  distance_threshold: 1.0
+  count_threshold:
+    - 1
+    - 2
+    - 3
+  time_threshold:
+    - 1
+    - 2
+    - 3
+  warning_color:
+    - green
+    - yellow
+    - red
+  is_3d: false
+excel:
+  worksheet_name: NLink_LinkTrack_Node_Frame1
+chart:
+  title: 距离折线图
+  y_axis: 距离
+  x_axis: 索引
