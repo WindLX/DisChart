@@ -47,7 +47,7 @@ impl TargetPointId {
 
                 Ok(TargetPointId::new(m, unique_sorted_numbers))
             }
-            Err(e) => Err(Error::Type(e.to_string())),
+            Err(e) => Err(Error::from(e)),
         }
     }
 

@@ -1,16 +1,13 @@
 import * as echarts from 'echarts';
-import { DistanceSet } from '../model/distance_set';
 import { appWindow } from "@tauri-apps/api/window";
+import { DistanceSet } from '../model/distance_set';
 import { Config } from '../model/config';
-import { subscribe } from '../event';
+import { eventBus } from '../main';
 
 export class Chart {
-    onCountUpdate: ((counts: number[]) => void) | null = null;
-
     chart: echarts.ECharts;
     options: any;
     time_threshold: number[];
-    counts: number[] = [];
 
     constructor(chartNodeId: string) {
         const chartContainer = document.getElementById(chartNodeId)!;
@@ -64,7 +61,20 @@ export class Chart {
 
         this.time_threshold = [1, 2, 3];
 
-        subscribe((config) => this.changeConfig(config));
+        eventBus.subscribe("onConfigUpdate", {
+            handler: (config) => {
+                this.changeConfig(config);
+                this.clear();
+            }
+        });
+
+        eventBus.subscribe("onDataCleared", {
+            handler: () => this.clear()
+        });
+
+        eventBus.subscribe("onDistanceUpdate", {
+            handler: (data) => this.load_data(data)
+        });
 
         appWindow.listen("tauri://resize", async () => {
             const size = await appWindow.innerSize();
@@ -84,7 +94,6 @@ export class Chart {
         let counts: number[] = distanceSets.map((distance_set) => {
             return distance_set.count;
         });
-        this.counts = counts;
 
         for (let index = 0; index < distanceSets[0].distances.length; index++) {
             const data = {
@@ -104,9 +113,8 @@ export class Chart {
         this.chart.setOption(this.options);
         this.chart.renderToCanvas();
 
-        if (this.onCountUpdate) {
-            this.onCountUpdate(this.findMaxConsecutiveTypes(counts, this.time_threshold));
-        }
+        eventBus.invoke("onCountUpdate", counts);
+        eventBus.invoke("onTimeCountUpdate", findMaxConsecutiveTypes(counts, this.time_threshold));
     }
 
     clear() {
@@ -116,7 +124,6 @@ export class Chart {
         this.options.yAxis.show = false;
         this.chart.setOption(this.options);
         this.chart.renderToCanvas();
-        this.counts = [];
     }
 
     changeConfig(config: Config) {
@@ -127,35 +134,35 @@ export class Chart {
         this.chart.renderToCanvas();
         this.time_threshold = config.system.time_threshold;
     }
+}
 
-    findMaxConsecutiveTypes(arr: number[], time_threshold: number[]): number[] {
-        const a = time_threshold[0];
-        const b = time_threshold[1];
-        const c = time_threshold[2];
+function findMaxConsecutiveTypes(arr: number[], time_threshold: number[]): number[] {
+    const a = time_threshold[0];
+    const b = time_threshold[1];
+    const c = time_threshold[2];
 
-        let maxConsecutiveCounts: number[] = [0, 0, 0];
-        let currentCounts: number[] = [0, 0, 0];
+    let maxConsecutiveCounts: number[] = [0, 0, 0];
+    let currentCounts: number[] = [0, 0, 0];
 
-        for (let i = 0; i < arr.length; i++) {
-            const num = arr[i];
+    for (let i = 0; i < arr.length; i++) {
+        const num = arr[i];
 
-            if (num >= a && num < b) {
-                currentCounts = [currentCounts[0] + 1, 0, 0];
-            } else if (num >= b && num < c) {
-                currentCounts = [0, currentCounts[1] + 1, 0];
-            } else if (num >= c) {
-                currentCounts = [0, 0, currentCounts[2] + 1];
-            } else {
-                currentCounts = [0, 0, 0];
-            }
-
-            for (let j = 0; j < 3; j++) {
-                if (currentCounts[j] > maxConsecutiveCounts[j]) {
-                    maxConsecutiveCounts[j] = currentCounts[j];
-                }
-            }
+        if (num >= a && num < b) {
+            currentCounts = [currentCounts[0] + 1, 0, 0];
+        } else if (num >= b && num < c) {
+            currentCounts = [0, currentCounts[1] + 1, 0];
+        } else if (num >= c) {
+            currentCounts = [0, 0, currentCounts[2] + 1];
+        } else {
+            currentCounts = [0, 0, 0];
         }
 
-        return maxConsecutiveCounts;
+        for (let j = 0; j < 3; j++) {
+            if (currentCounts[j] > maxConsecutiveCounts[j]) {
+                maxConsecutiveCounts[j] = currentCounts[j];
+            }
+        }
     }
+
+    return maxConsecutiveCounts;
 }

@@ -1,22 +1,25 @@
+import * as ExcelJS from "exceljs";
 import { invoke } from "@tauri-apps/api/tauri";
-import { Toast, InfoLevel } from "./toast";
 import { appWindow } from "@tauri-apps/api/window";
-import { open } from '@tauri-apps/api/dialog';
+import { open, save } from '@tauri-apps/api/dialog';
+import { resourceDir, join, basename } from '@tauri-apps/api/path';
+import { readBinaryFile, writeBinaryFile } from '@tauri-apps/api/fs';
 import { Config } from "../model/config";
-import { loadConfig, subscribe } from "../event";
+import { Toast, InfoLevel } from "./toast";
+import { eventBus } from "../main";
 
 export class MenuBar {
-    onDataChanged: (() => void) | null = null;
-    onDataCleared: (() => void) | null = null;
-
     private importDataBtn: HTMLElement;
     private clearDataBtn: HTMLElement;
-    saveDataBtn: HTMLElement;
+    private saveDataBtn: HTMLElement;
     private exitBtn: HTMLElement;
     private updateConfigBtn: HTMLElement;
 
     path: string | null = null;
-    config: Config | null = null;
+    worksheet_name: string | null = null;
+    count_threshold: Array<number> = [];
+    warning_color: Array<string> = [];
+    counts: number[] = [];
 
     constructor(menuNodeId: string) {
         const menuNode = document.getElementById(menuNodeId)!;
@@ -27,7 +30,17 @@ export class MenuBar {
         this.exitBtn = items.item(3) as HTMLElement;
         this.updateConfigBtn = items.item(4) as HTMLElement;
 
-        subscribe((config) => this.config = config);
+        eventBus.subscribe("onConfigUpdate", {
+            handler: (config) => {
+                this.worksheet_name = (config as Config).excel.worksheet_name;
+                this.count_threshold = (config as Config).system.count_threshold;
+                this.warning_color = (config as Config).system.warning_color;
+            }
+        });
+
+        eventBus.subscribe("onCountUpdate", {
+            handler: (counts) => this.counts = counts
+        })
 
         this.importDataBtn.addEventListener("pointerup", async () => {
             const selected = await open({
@@ -42,13 +55,11 @@ export class MenuBar {
                 await invoke("load_data",
                     {
                         path: selected,
-                        worksheetName: this.config?.excel.worksheet_name
+                        worksheetName: this.worksheet_name
                     }).then((msg) => {
                         const toast = new Toast("toast-container");
                         toast.showToast(msg as string, InfoLevel.success);
-                        if (this.onDataChanged) {
-                            this.onDataChanged();
-                        }
+                        eventBus.invoke("onDataChanged");
                     }).catch((error) => {
                         const toast = new Toast("toast-container");
                         toast.showToast(error, InfoLevel.error);
@@ -62,14 +73,48 @@ export class MenuBar {
                     const toast = new Toast("toast-container");
                     toast.showToast(msg as string, InfoLevel.success);
                     this.path = null;
-                    if (this.onDataCleared) {
-                        this.onDataCleared();
-                    }
+                    eventBus.invoke("onDataCleared");
                 })
                 .catch((err) => {
                     const toast = new Toast("toast-container");
                     toast.showToast(err, InfoLevel.error);
-                })
+                });
+        });
+
+        this.saveDataBtn.addEventListener("pointerup", async () => {
+            if (!this.path) {
+                const toast = new Toast("toast-container");
+                toast.showToast("Data is empty, please load data file first", InfoLevel.error);
+            } else {
+                const filePath = await save({
+                    filters: [{
+                        name: 'Data',
+                        extensions: ['xlsx']
+                    }]
+                });
+                if (filePath != null) {
+                    let counts = this.counts;
+                    let res = counts.map((value) => {
+                        if (value >= this.count_threshold[2]) {
+                            return this.warning_color[2]
+                        } else if (value >= this.count_threshold[1]) {
+                            return this.warning_color[1]
+                        } else if (value >= this.count_threshold[0]!) {
+                            return this.warning_color[0]
+                        } else {
+                            return "none"
+                        }
+                    });
+                    await writeExcel(this.path, this.worksheet_name!, filePath, res).then(() => {
+                        const toast = new Toast("toast-container");
+                        toast.showToast("Save File Successfully!", InfoLevel.success);
+                    }).catch((err) => {
+                        console.log(err);
+                        const toast = new Toast("toast-container");
+                        toast.showToast(err, InfoLevel.error);
+                    });
+                }
+            }
         });
 
         this.exitBtn.addEventListener("pointerup", async () => {
@@ -77,7 +122,70 @@ export class MenuBar {
         });
 
         this.updateConfigBtn.addEventListener("pointerup", async () => {
-            await loadConfig()
+            await invoke("update_config")
+                .then((d) => {
+                    const toast = new Toast("toast-container");
+                    toast.showToast("Update Config Successfully!", InfoLevel.success);
+                    eventBus.invoke("onConfigUpdate", d);
+                })
+                .catch((err) => {
+                    const toast = new Toast("toast-container");
+                    toast.showToast(err, InfoLevel.error);
+                })
         });
     }
+}
+
+async function writeExcel(readPath: string, worksheetName: string, savePath: string, colors: string[]) {
+    const resourceDirPath = await resourceDir();
+    let filePath = await join(resourceDirPath, 'resources');
+    filePath = await join(filePath, 'temp');
+    filePath = await join(filePath, await basename(readPath));
+
+    const file = await readBinaryFile(filePath);
+
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(file);
+    const worksheet = workbook.getWorksheet(worksheetName);
+
+    worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+        if (rowNumber > 1) {
+            const cell = row.getCell(3);
+            const color = colors[rowNumber - 2];
+
+            if (color !== 'none') {
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: convertColorToHex(color) },
+                };
+            }
+        }
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    await writeBinaryFile(savePath, buffer);
+}
+
+function convertColorToHex(color: string): string {
+    let hexColor: string;
+
+    switch (color.toLowerCase()) {
+        case 'red':
+            hexColor = 'FFFF0000';
+            break;
+        case 'green':
+            hexColor = 'FF00FF00';
+            break;
+        case 'yellow':
+            hexColor = 'FFFFFF00';
+            break;
+        case 'blue':
+            hexColor = 'FF0000FF';
+            break;
+        default:
+            hexColor = 'FF' + color.substring(1);
+    }
+
+    return hexColor;
 }

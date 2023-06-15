@@ -17,7 +17,7 @@ where
                 let value = l.clone();
                 Ok(value)
             }
-            Err(e) => Err(Error::Runtime(e.to_string())),
+            Err(e) => Err(Error::from(e)),
         }
     }
 
@@ -28,7 +28,7 @@ where
                 *l = Some(value);
                 Ok(())
             }
-            Err(e) => Err(Error::Runtime(e.to_string())),
+            Err(e) => Err(Error::from(e)),
         }
     }
 
@@ -39,7 +39,7 @@ where
                 *l = None;
                 Ok(())
             }
-            Err(e) => Err(Error::Runtime(e.to_string())),
+            Err(e) => Err(Error::from(e)),
         }
     }
 }

@@ -1,3 +1,5 @@
+import { eventBus } from "../main";
+
 export class Warn {
     private lights: HTMLElement[] = [];
     private texts: HTMLElement[] = [];
@@ -14,6 +16,21 @@ export class Warn {
         this.texts.push(texts.item(0) as HTMLElement);
         this.texts.push(texts.item(1) as HTMLElement);
         this.texts.push(texts.item(2) as HTMLElement);
+
+        eventBus.subscribe("onTimeCountUpdate", {
+            handler: (counts) => this.loadCounts(counts)
+        });
+
+        eventBus.subscribe("onDataCleared", {
+            handler: () => this.loadCounts([0, 0, 0])
+        });
+
+        eventBus.subscribe("onConfigUpdate", {
+            handler: (config) => {
+                this.loadConfig(config.system.warning_color);
+                this.loadCounts([0, 0, 0]);
+            }
+        });
     }
 
     loadCounts(counts: number[]) {

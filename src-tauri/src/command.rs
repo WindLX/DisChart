@@ -24,13 +24,13 @@ pub async fn load_data(
                 if !std::path::Path::exists(&pb) {
                     match std::fs::create_dir(&pb) {
                         Ok(_) => {}
-                        Err(error) => Err(Error::Io(error.to_string()))?,
+                        Err(error) => Err(Error::from(error))?,
                     }
                 }
                 pb.push(file_name_str);
                 match std::fs::copy(path, pb) {
                     Ok(_) => {}
-                    Err(error) => Err(Error::Io(error.to_string()))?,
+                    Err(error) => Err(Error::from(error))?,
                 }
             } else {
                 Err(Error::Load(String::from("Invalid File")))?
@@ -58,12 +58,12 @@ pub fn clear_data(
             if !std::path::Path::exists(&pb) {
                 match std::fs::create_dir(&pb) {
                     Ok(_) => {}
-                    Err(error) => Err(Error::Io(error.to_string()))?,
+                    Err(error) => Err(Error::from(error))?,
                 }
             } else {
                 let entries = match std::fs::read_dir(pb) {
                     Ok(e) => e,
-                    Err(error) => Err(Error::Io(error.to_string()))?,
+                    Err(error) => Err(Error::from(error))?,
                 };
                 for entry in entries {
                     if let Ok(entry) = entry {
@@ -71,7 +71,7 @@ pub fn clear_data(
                         if path.is_file() {
                             match std::fs::remove_file(path) {
                                 Ok(_) => {}
-                                Err(error) => Err(Error::Io(error.to_string()))?,
+                                Err(error) => Err(Error::from(error))?,
                             }
                         }
                     }

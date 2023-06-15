@@ -14,12 +14,12 @@ impl Config {
     pub fn load(file_path: &PathBuf) -> Result<Config, Error> {
         let contents = match fs::read_to_string(file_path) {
             Ok(f) => f,
-            Err(e) => Err(Error::Io(e.to_string()))?,
+            Err(e) => Err(Error::from(e))?,
         };
 
         let data: Config = match serde_yaml::from_str(&contents) {
             Ok(d) => d,
-            Err(e) => Err(Error::Load(e.to_string()))?,
+            Err(e) => Err(Error::from(e))?,
         };
 
         Ok(data)

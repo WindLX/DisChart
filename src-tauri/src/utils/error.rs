@@ -10,15 +10,39 @@ pub enum Error {
     Index(String),
 }
 
+impl From<std::io::Error> for Error {
+    fn from(value: std::io::Error) -> Self {
+        Error::Io(value.to_string())
+    }
+}
+
 impl From<office::Error> for Error {
     fn from(value: office::Error) -> Self {
         Error::Io(value.to_string())
     }
 }
 
+impl From<core::num::ParseIntError> for Error {
+    fn from(value: core::num::ParseIntError) -> Self {
+        Error::Type(value.to_string())
+    }
+}
+
 impl From<tokio::task::JoinError> for Error {
     fn from(value: tokio::task::JoinError) -> Self {
         Error::Load(value.to_string())
+    }
+}
+
+impl From<serde_yaml::Error> for Error {
+    fn from(value: serde_yaml::Error) -> Self {
+        Error::Load(value.to_string())
+    }
+}
+
+impl<'a, T> From<std::sync::PoisonError<std::sync::MutexGuard<'a, T>>> for Error {
+    fn from(value: std::sync::PoisonError<std::sync::MutexGuard<'a, T>>) -> Self {
+        Error::Runtime(value.to_string())
     }
 }
 

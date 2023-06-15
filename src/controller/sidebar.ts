@@ -1,9 +1,8 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import { Toast, InfoLevel } from "./toast";
+import { eventBus } from "../main";
 
 export class SideBar {
-    onDataChanged: (() => void) | null = null;
-
     private sidebar: HTMLElement;
     private toggleBtn: HTMLElement;
     private mainInput: HTMLElement;
@@ -33,17 +32,15 @@ export class SideBar {
                 mainId: (this.mainInput as HTMLInputElement).value,
                 subId: (this.subInput as HTMLInputElement).value
             })
-            .then((msg) => {
-                const toast = new Toast("toast-container");
-                toast.showToast(msg as string, InfoLevel.success);
-                if (this.onDataChanged) {
-                    this.onDataChanged();
-                }
-            })
-            .catch((err) => {
-                const toast = new Toast("toast-container");
-                toast.showToast(err, InfoLevel.error);
-            })
+                .then((msg) => {
+                    const toast = new Toast("toast-container");
+                    toast.showToast(msg as string, InfoLevel.success);
+                    eventBus.invoke("onFilterChanged");
+                })
+                .catch((err) => {
+                    const toast = new Toast("toast-container");
+                    toast.showToast(err, InfoLevel.error);
+                })
         });
     }
 }
