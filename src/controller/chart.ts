@@ -7,15 +7,17 @@ import { eventBus } from '../main';
 export class Chart {
     chart: echarts.ECharts;
     options: any;
-    time_threshold: number[];
+    count_threshold: number[];
 
     constructor(chartNodeId: string) {
         const chartContainer = document.getElementById(chartNodeId)!;
         const chart = echarts.init(chartContainer);
 
-        const options = {
+        const options: echarts.EChartsOption = {
             title: {
                 text: "",
+                top: "3%",
+                left: "center"
             },
             xAxis: {
                 type: "category",
@@ -59,7 +61,7 @@ export class Chart {
         chart.renderToCanvas();
         this.chart = chart;
 
-        this.time_threshold = [1, 2, 3];
+        this.count_threshold = [1, 2, 3];
 
         eventBus.subscribe("onConfigUpdate", {
             handler: (config) => {
@@ -77,13 +79,7 @@ export class Chart {
         });
 
         appWindow.listen("tauri://resize", async () => {
-            const size = await appWindow.innerSize();
-            var screenHeight = window.screen.height;
-            const rate_h = screenHeight / 1080;
-            this.chart.resize({
-                height: size.height * 0.85 * rate_h,
-                width: size.width * 0.92 * rate_h
-            });
+            this.chart.resize();
         });
     }
 
@@ -114,7 +110,7 @@ export class Chart {
         this.chart.renderToCanvas();
 
         eventBus.invoke("onCountUpdate", counts);
-        eventBus.invoke("onTimeCountUpdate", findMaxConsecutiveTypes(counts, this.time_threshold));
+        eventBus.invoke("onTimeCountUpdate", findMaxConsecutiveTypes(counts, this.count_threshold));
     }
 
     clear() {
@@ -132,14 +128,14 @@ export class Chart {
         this.options.yAxis.name = config.chart.y_axis;
         this.chart.setOption(this.options);
         this.chart.renderToCanvas();
-        this.time_threshold = config.system.time_threshold;
+        this.count_threshold = config.system.count_threshold;
     }
 }
 
-function findMaxConsecutiveTypes(arr: number[], time_threshold: number[]): number[] {
-    const a = time_threshold[0];
-    const b = time_threshold[1];
-    const c = time_threshold[2];
+function findMaxConsecutiveTypes(arr: number[], count_threshold: number[]): number[] {
+    const a = count_threshold[0];
+    const b = count_threshold[1];
+    const c = count_threshold[2];
 
     let maxConsecutiveCounts: number[] = [0, 0, 0];
     let currentCounts: number[] = [0, 0, 0];

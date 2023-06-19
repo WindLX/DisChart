@@ -5,6 +5,7 @@ import { open, save } from '@tauri-apps/api/dialog';
 import { resourceDir, join, basename } from '@tauri-apps/api/path';
 import { readBinaryFile, writeBinaryFile } from '@tauri-apps/api/fs';
 import { Config } from "../model/config";
+import { DistanceSet } from "../model/distance_set";
 import { Toast, InfoLevel } from "./toast";
 import { eventBus } from "../main";
 
@@ -20,6 +21,7 @@ export class MenuBar {
     count_threshold: Array<number> = [];
     warning_color: Array<string> = [];
     counts: number[] = [];
+    distance_threshold: number | null = null;
 
     constructor(menuNodeId: string) {
         const menuNode = document.getElementById(menuNodeId)!;
@@ -35,6 +37,7 @@ export class MenuBar {
                 this.worksheet_name = (config as Config).excel.worksheet_name;
                 this.count_threshold = (config as Config).system.count_threshold;
                 this.warning_color = (config as Config).system.warning_color;
+                this.distance_threshold = (config as Config).system.distance_threshold;
             }
         });
 
@@ -105,13 +108,36 @@ export class MenuBar {
                             return "none"
                         }
                     });
-                    await writeExcel(this.path, this.worksheet_name!, filePath, res).then(() => {
+
+                    await invoke("get_distance", {
+                        distanceThreshold: this.distance_threshold,
+                        is3d: true
+                    }).then(async (data) => {
+                        let data_3d = data as DistanceSet[];
+
+                        await invoke("get_distance", {
+                            distanceThreshold: this.distance_threshold,
+                            is3d: false
+                        }).then(async (data) => {
+                            let data_2d = data as DistanceSet[];
+
+                            await writeExcel(this.path!, this.worksheet_name!, filePath, res, data_2d, data_3d).then(() => {
+                                const toast = new Toast("toast-container");
+                                toast.showToast("Save File Successfully!", InfoLevel.success);
+                            }).catch((err) => {
+                                console.log(err);
+                                const toast = new Toast("toast-container");
+                                toast.showToast(err, InfoLevel.error);
+                            });
+
+                        }).catch((error) => {
+                            const toast = new Toast("toast-container");
+                            toast.showToast(error, InfoLevel.error);
+                        });
+
+                    }).catch((error) => {
                         const toast = new Toast("toast-container");
-                        toast.showToast("Save File Successfully!", InfoLevel.success);
-                    }).catch((err) => {
-                        console.log(err);
-                        const toast = new Toast("toast-container");
-                        toast.showToast(err, InfoLevel.error);
+                        toast.showToast(error, InfoLevel.error);
                     });
                 }
             }
@@ -136,12 +162,12 @@ export class MenuBar {
     }
 }
 
-async function writeExcel(readPath: string, worksheetName: string, savePath: string, colors: string[]) {
+async function writeExcel(readPath: string, worksheetName: string, savePath: string, colors: string[], data_2d: DistanceSet[], data_3d: DistanceSet[]) {
     const resourceDirPath = await resourceDir();
     let filePath = await join(resourceDirPath, 'resources');
     filePath = await join(filePath, 'temp');
     filePath = await join(filePath, await basename(readPath));
-
+    console.log(data_2d, data_3d);
     const file = await readBinaryFile(filePath);
 
     const workbook = new ExcelJS.Workbook();

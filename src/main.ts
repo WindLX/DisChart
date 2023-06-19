@@ -9,24 +9,20 @@ import { DistanceSet } from "./model/distance_set";
 import { invoke } from "@tauri-apps/api/tauri";
 import { appWindow } from "@tauri-apps/api/window";
 
-let menuController: MenuBar;
-let sideController: SideBar;
-let chartController: Chart;
-let warnController: Warn;
-
-export let eventBus: EventBus;
+export let eventBus: EventBus = new EventBus();
 
 let config: Config | null = null;
 
 let sign_1: boolean = false;
 let sign_2: boolean = false;
 
+let is_3d: boolean = false;
+
 window.addEventListener("DOMContentLoaded", async () => {
-  eventBus = new EventBus();
-  menuController = new MenuBar("menubar");
-  sideController = new SideBar("main");
-  chartController = new Chart("chart");
-  warnController = new Warn("warn");
+  new MenuBar("menubar");
+  new SideBar("main");
+  new Chart("chart");
+  new Warn("warn");
 
   eventBus.subscribe("onConfigUpdate", {
     handler: async (c) => {
@@ -49,14 +45,15 @@ window.addEventListener("DOMContentLoaded", async () => {
   eventBus.subscribe("onDataChanged", {
     handler: async () => {
       sign_1 = true;
-      await getDistance(config?.system.is_3d!);
+      await getDistance(is_3d);
     }
   });
 
   eventBus.subscribe("onFilterChanged", {
-    handler: async () => {
+    handler: async (is3d) => {
       sign_2 = true;
-      await getDistance(config?.system.is_3d!);
+      is_3d = is3d;
+      await getDistance(is_3d);
     }
   });
 

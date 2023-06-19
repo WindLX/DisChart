@@ -47,7 +47,5 @@ pub struct Window {
 pub struct System {
     pub distance_threshold: f64,
     pub count_threshold: [usize; 3],
-    pub time_threshold: [usize; 3],
     pub warning_color: [String; 3],
-    pub is_3d: bool,
 }

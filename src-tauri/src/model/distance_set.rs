@@ -26,7 +26,7 @@ impl DistanceSet {
             .into_iter()
             .map(|id| {
                 let distance = main_point.distance(point_set.get(id)?.clone(), is_3d);
-                if distance >= distance_threshold {
+                if distance <= distance_threshold {
                     count += 1;
                 }
                 Ok((id, distance))

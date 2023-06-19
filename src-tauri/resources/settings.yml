@@ -1,12 +1,8 @@
 window:
-  title: 距离报警系统
+  title: System
 system:
-  distance_threshold: 1.0
+  distance_threshold: 2.0
   count_threshold:
-    - 1
-    - 2
-    - 3
-  time_threshold:
     - 1
     - 2
     - 3
@@ -14,7 +10,6 @@ system:
     - green
     - yellow
     - red
-  is_3d: false
 excel:
   worksheet_name: NLink_LinkTrack_Node_Frame1
 chart:

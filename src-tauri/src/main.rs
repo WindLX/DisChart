@@ -26,7 +26,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             load_data,
             clear_data,
-            set_distance,
+            set_target,
             get_distance,
             update_config,
         ])

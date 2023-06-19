@@ -8,6 +8,7 @@ export class SideBar {
     private mainInput: HTMLElement;
     private subInput: HTMLElement;
     private filterBtn: HTMLElement;
+    private switchBtn: HTMLInputElement;
 
     constructor(sideNodeId: string) {
         const sideNode = document.getElementById(sideNodeId)!;
@@ -16,6 +17,7 @@ export class SideBar {
         this.mainInput = sideNode.getElementsByClassName('main-input').item(0) as HTMLElement;
         this.subInput = sideNode.getElementsByClassName('sub-input').item(0) as HTMLElement;
         this.filterBtn = sideNode.getElementsByClassName('send-btn').item(0) as HTMLElement;
+        this.switchBtn = sideNode.getElementsByClassName('switch-btn').item(0) as HTMLInputElement;
 
         this.toggleBtn.addEventListener('pointerup', () => {
             if (this.sidebar.style.transform === 'translateX(-10vw)') {
@@ -28,14 +30,14 @@ export class SideBar {
         });
 
         this.filterBtn.addEventListener('pointerup', async () => {
-            await invoke("set_distance", {
+            await invoke("set_target", {
                 mainId: (this.mainInput as HTMLInputElement).value,
-                subId: (this.subInput as HTMLInputElement).value
+                subId: (this.subInput as HTMLInputElement).value,
             })
                 .then((msg) => {
                     const toast = new Toast("toast-container");
                     toast.showToast(msg as string, InfoLevel.success);
-                    eventBus.invoke("onFilterChanged");
+                    eventBus.invoke("onFilterChanged", this.switchBtn.checked);
                 })
                 .catch((err) => {
                     const toast = new Toast("toast-container");

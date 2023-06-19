@@ -250,9 +250,8 @@ body {
   left: 0;
   justify-content: center;
   align-items: center;
-  width: 94vw;
-  height: 85vh;
-  transition: 0.3s ease-in-out;
+  width: 100vw;
+  height: 80vh;
 }
 
 /* Main */
@@ -261,21 +260,25 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  margin: 0 1vw;
-  padding: 0 1vw;
-  max-width: 96vw;
-  max-height: 92vh;
 }
 
 .main #title {
   color: #333;
   user-select: none;
+  position: fixed;
+  top: 2rem;
+  right: 50%;
+  transform: translateX(50%);
+  width: max-content;
 }
 
 /* Warn */
 .warn-box {
+  position: fixed;
+  left: 0;
   display: flex;
-  justify-content: left;
+  justify-content: center;
+  align-items: center;
 }
 
 .warn {
@@ -285,7 +288,7 @@ body {
   z-index: -1;
   align-items: center;
   justify-content: center;
-  margin: 1rem;
+  margin-left: 1rem;
 }
 
 .warn .light {
@@ -306,4 +309,77 @@ body {
   font-size: 0.8rem;
   user-select: none;
   text-align: center;
+}
+
+/* switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 3rem;
+  height: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.switch input {
+  display:none;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 1.3rem;
+  width: 1.3rem;
+  left: 0.1rem;
+  bottom: 0.1rem;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(1.5rem);
+  -ms-transform: translateX(1.5rem);
+  transform: translateX(1.5rem);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 1.5rem;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+.switch-label {
+  margin: 0 1rem;
+  font-size: 0.8rem;
+  color:#333;
+  text-align: center;
+  user-select: none;
 }

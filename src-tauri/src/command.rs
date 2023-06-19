@@ -84,7 +84,7 @@ pub fn clear_data(
 }
 
 #[tauri::command]
-pub fn set_distance(
+pub fn set_target(
     main_id: String,
     sub_id: String,
     state: tauri::State<'_, StateWrapper<TargetPointId>>,
