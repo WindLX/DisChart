@@ -43,7 +43,7 @@ export class MenuBar {
 
         eventBus.subscribe("onCountUpdate", {
             handler: (counts) => this.counts = counts
-        })
+        });
 
         this.importDataBtn.addEventListener("pointerup", async () => {
             const selected = await open({
@@ -167,15 +167,32 @@ async function writeExcel(readPath: string, worksheetName: string, savePath: str
     let filePath = await join(resourceDirPath, 'resources');
     filePath = await join(filePath, 'temp');
     filePath = await join(filePath, await basename(readPath));
-    console.log(data_2d, data_3d);
+
+    let data = data_2d.map((value, index) => [value, data_3d[index]]);
     const file = await readBinaryFile(filePath);
 
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(file);
-    const worksheet = workbook.getWorksheet(worksheetName);
+    let worksheet = workbook.getWorksheet(worksheetName);
+
+    const d_example = data[0][0].distances;
+
+    for (let index = 0; index < d_example.length; index++) {
+        const idx_1 = 9 + d_example[index][0] * 5 + index * 2;
+        const idx_2 = 10 + d_example[index][0] * 5 + index * 2;
+        worksheet.spliceColumns(idx_1, 0, []);
+        worksheet.spliceColumns(idx_2, 0, []);
+    }
 
     worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-        if (rowNumber > 1) {
+        if (rowNumber == 1) {
+            data[0].forEach((d_d, idx_d) => {
+                d_d.distances.forEach((d_p, idx_p) => {
+                    const idx = 9 + idx_p * 2 + d_p[0] * 5 + idx_d;
+                    row.getCell(idx).value = `distance_${idx_d + 2}d, main_id: ${data[0][0].main_point_id}`;
+                })
+            });
+        } else if (rowNumber > 1) {
             const cell = row.getCell(3);
             const color = colors[rowNumber - 2];
 
@@ -186,7 +203,14 @@ async function writeExcel(readPath: string, worksheetName: string, savePath: str
                     fgColor: { argb: convertColorToHex(color) },
                 };
             }
-        }
+
+            data[rowNumber - 2].forEach((d_d, idx_d) => {
+                d_d.distances.forEach((d_p, idx_p) => {
+                    const idx = 9 + idx_p * 2 + d_p[0] * 5 + idx_d;
+                    row.getCell(idx).value = d_p[1];
+                })
+            });
+        };
     });
 
     const buffer = await workbook.xlsx.writeBuffer();
